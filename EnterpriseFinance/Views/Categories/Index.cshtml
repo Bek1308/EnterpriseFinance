@@ -1,0 +1,254 @@
+﻿@model List<Category>
+@{
+    ViewData["Title"] = "Categories";
+}
+
+<!-- Page Header (oldingidek saqlanadi) -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.05)); border-radius: 20px;">
+            <div class="card-body p-5">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1 class="display-5 fw-bold mb-3">Categories Management</h1>
+                        <p class="lead opacity-90 mb-0">Organize your income and expense categories</p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                        <div class="btn-group mb-3" role="group" id="viewModeGroup">
+                            <button type="button" class="btn btn-outline-primary active" data-view="list">
+                                <i class="bi bi-list-ul"></i> List
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" data-view="grid">
+                                <i class="bi bi-grid-3x3-gap"></i> Grid
+                            </button>
+                        </div>
+                        <a asp-action="Create" class="btn btn-success btn-lg shadow">
+                            <i class="bi bi-plus-circle-fill me-2"></i> New Category
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter (oldingidek) -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <form id="filterForm" class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold">Search</label>
+                        <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Search by name..." value="@ViewData["Search"]" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Type</label>
+                        <select id="isIncomeSelect" class="form-select form-select-lg">
+                            <option value="">All Types</option>
+                            <option value="true" selected="@(ViewData["IsIncome"]?.ToString() == "true")">Income</option>
+                            <option value="false" selected="@(ViewData["IsIncome"]?.ToString() == "false")">Expense</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" id="applyFilter" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-search me-2"></i> Apply Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- List View -->
+<div id="listView" class="view-mode">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Color</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoriesBody">
+                                <!-- JS bilan to‘ldiriladi -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grid View -->
+<div id="gridView" class="view-mode" style="display: none;">
+    <div class="row g-4" id="categoriesGrid">
+        <!-- JS bilan to‘ldiriladi -->
+    </div>
+</div>
+
+<!-- No Results -->
+<div id="noResults" class="text-center py-5" style="display: none;">
+    <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+    <p class="text-muted mb-0">No categories found matching your criteria.</p>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-exclamation-triangle-fill text-danger fs-1"></i>
+                </div>
+                <p class="text-center mb-0">
+                    Are you sure you want to delete the category <strong id="deleteCategoryName"></strong>?
+                </p>
+                <small class="text-muted d-block text-center mt-3">This action cannot be undone.</small>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary btn-lg px-5" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <form id="deleteForm" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-danger btn-lg px-5 shadow">
+                        <i class="bi bi-trash me-2"></i> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const categoriesData = @Html.Raw(Json.Serialize(Model));
+
+        let currentView = localStorage.getItem('categoriesViewMode') || 'list';
+
+        function renderCategories() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const isIncome = document.getElementById('isIncomeSelect').value;
+
+            let filtered = categoriesData;
+
+            if (search) {
+                filtered = filtered.filter(c => c.name.toLowerCase().includes(search));
+            }
+
+            if (isIncome !== '') {
+                filtered = filtered.filter(c => c.isIncome === (isIncome === 'true'));
+            }
+
+            const listBody = document.getElementById('categoriesBody');
+            const gridContainer = document.getElementById('categoriesGrid');
+            const noResults = document.getElementById('noResults');
+
+            listBody.innerHTML = '';
+            gridContainer.innerHTML = '';
+
+            if (filtered.length === 0) {
+                noResults.style.display = 'block';
+                document.getElementById('listView').style.display = 'none';
+                document.getElementById('gridView').style.display = 'none';
+                return;
+            }
+
+            noResults.style.display = 'none';
+
+            filtered.forEach(item => {
+                const typeBadge = item.isIncome
+                    ? '<span class="badge rounded-pill bg-success">Income</span>'
+                    : '<span class="badge rounded-pill bg-danger">Expense</span>';
+
+                const colorBox = `<div class="rounded me-3" style="width: 40px; height: 40px; background-color: ${item.color};"></div>`;
+
+                // Delete tugmasi modal chaqiradi
+                const deleteButton = `
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                            onclick="prepareDelete(${item.id}, '${item.name.replace(/'/g, "\\'")}')">
+                        <i class="bi bi-trash"></i>
+                    </button>`;
+
+                const actions = `
+                    <a href="/Categories/Edit/${item.id}" class="btn btn-sm btn-outline-primary me-2">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    ${deleteButton}
+                `;
+
+                // List View
+                const listRow = document.createElement('tr');
+                listRow.innerHTML = `
+                    <td class="fw-semibold py-3">${item.name}</td>
+                    <td>${typeBadge}</td>
+                    <td><div class="d-flex align-items-center gap-2">${colorBox}<span class="text-muted small">${item.color}</span></div></td>
+                    <td class="text-end py-3">${actions}</td>
+                `;
+                listBody.appendChild(listRow);
+
+                // Grid View
+                const gridCard = document.createElement('div');
+                gridCard.className = 'col-md-6 col-lg-4';
+                gridCard.innerHTML = `
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex align-items-center mb-3">
+                                ${colorBox}
+                                <div>
+                                    <h5 class="fw-bold mb-1">${item.name}</h5>
+                                    ${typeBadge}
+                                </div>
+                            </div>
+                            <div class="mt-auto text-end">
+                                ${actions}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                gridContainer.appendChild(gridCard);
+            });
+
+            document.getElementById('listView').style.display = currentView === 'list' ? 'block' : 'none';
+            document.getElementById('gridView').style.display = currentView === 'grid' ? 'block' : 'none';
+        }
+
+        // Delete modal tayyorlash
+        function prepareDelete(id, name) {
+            document.getElementById('deleteCategoryName').textContent = name;
+            document.getElementById('deleteForm').action = `/Categories/Delete/${id}`;
+        }
+
+        // View mode tugmalari
+        document.querySelectorAll('#viewModeGroup button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#viewModeGroup button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+                localStorage.setItem('categoriesViewMode', currentView);
+                renderCategories();
+            });
+        });
+
+        // Filter tugmasi
+        document.getElementById('applyFilter').addEventListener('click', renderCategories);
+
+        // Saqlangan view mode
+        document.querySelector(`#viewModeGroup button[data-view="${currentView}"]`).classList.add('active');
+
+        // Dastlabki render
+        renderCategories();
+    </script>
+}

@@ -1,0 +1,115 @@
+﻿<!-- Views/Budget/Create.cshtml (avvalgi dizayn bilan) -->
+@model Budget
+@{
+    ViewData["Title"] = "Create Budget";
+}
+
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-lg" style="border-radius: 20px; background: var(--header-bg, linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.05)));">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1 class="display-5 fw-bold mb-2">@ViewData["Title"]</h1>
+                        <p class="lead opacity-90 mb-0">Set up monthly budget for income and expenses</p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-lg me-2">
+                            <i class="bi bi-arrow-left-circle me-1"></i> Back
+                        </a>
+                        <button type="submit" form="budgetForm" class="btn btn-success btn-lg shadow">
+                            <i class="bi bi-check-circle-fill me-1"></i> Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow h-100" style="border-radius: 20px; background-color: rgba(var(--bs-body-bg-rgb), 0.9); backdrop-filter: blur(8px);">
+            <div class="card-body p-5 d-flex flex-column">
+                <h5 class="fw-bold mb-4">Details</h5>
+                <form asp-action="Create" method="post" id="budgetForm">
+                    <div asp-validation-summary="All" class="alert alert-danger mb-4 rounded-3"></div>
+
+                    <div class="mb-4 flex-fill">
+                        <label asp-for="Name" class="form-label fw-bold">Budget Name <span class="text-danger">*</span></label>
+                        <input asp-for="Name" class="form-control form-control-lg" placeholder="e.g. December 2025 Family Budget" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4 flex-fill">
+                        <label asp-for="CategoryId" class="form-label fw-bold">Category (optional)</label>
+                        <select asp-for="CategoryId" class="form-select form-select-lg" asp-items="ViewBag.Categories">
+                            <option value="">-- All categories (general budget) --</option>
+                        </select>
+                        <small class="text-muted">Leave empty for overall monthly budget</small>
+                    </div>
+
+                    <div class="mb-4 flex-fill">
+                        <label asp-for="Notes" class="form-label fw-bold">Notes (optional)</label>
+                        <textarea asp-for="Notes" class="form-control form-control-lg" rows="5" placeholder="Add any notes..."></textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow h-100" style="border-radius: 20px; background-color: rgba(var(--bs-body-bg-rgb), 0.9); backdrop-filter: blur(8px);">
+            <div class="card-body p-5 d-flex flex-column">
+                <h5 class="fw-bold mb-4">Budget Settings</h5>
+
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <label asp-for="Year" class="form-label fw-bold">Year</label>
+                        <input asp-for="Year" class="form-control form-control-lg text-center" type="number" min="2000" max="2100" form="budgetForm" />
+                    </div>
+                    <div class="col-6">
+                        <label asp-for="Month" class="form-label fw-bold">Month</label>
+                        <select asp-for="Month" class="form-select form-select-lg" form="budgetForm">
+                            @for (int m = 1; m <= 12; m++)
+                            {
+                                var monthName = new DateTime(2020, m, 1).ToString("MMMM");
+                                <option value="@m" selected="@(m == DateTime.Now.Month)">@monthName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-4 flex-fill">
+                    <label asp-for="PlannedIncome" class="form-label fw-bold">Planned Income</label>
+                    <div class="input-group">
+                        <span class="input-group-text fw-bold">UZS</span>
+                        <input asp-for="PlannedIncome" class="form-control form-control-lg text-end fw-bold text-success" style="font-size: 1.8rem;" placeholder="0" form="budgetForm" />
+                    </div>
+                </div>
+
+                <div class="mb-4 flex-fill">
+                    <label asp-for="PlannedExpense" class="form-label fw-bold">Planned Expense</label>
+                    <div class="input-group">
+                        <span class="input-group-text fw-bold">UZS</span>
+                        <input asp-for="PlannedExpense" class="form-control form-control-lg text-end fw-bold text-danger" style="font-size: 1.8rem;" placeholder="0" form="budgetForm" />
+                    </div>
+                </div>
+
+                <div class="mt-auto d-flex flex-column gap-3">
+                    <button type="submit" form="budgetForm" class="btn btn-success btn-lg shadow">
+                        <i class="bi bi-check-circle-fill me-2"></i> Save Budget
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-x-circle me-2"></i> Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

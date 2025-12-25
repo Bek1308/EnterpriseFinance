@@ -1,0 +1,253 @@
+﻿@model List<dynamic>
+@{
+    ViewData["Title"] = "Transactions";
+}
+
+<!-- Hero Header -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.05)); border-radius: 20px;">
+            <div class="card-body p-5">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h1 class="display-5 fw-bold mb-3">Transactions</h1>
+                        <p class="lead opacity-90 mb-0">All your income and expense records</p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                        <div class="btn-group mb-3" role="group" id="viewModeGroup">
+                            <button type="button" class="btn btn-outline-primary active" data-view="list">
+                                <i class="bi bi-list-ul"></i> List
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" data-view="grid">
+                                <i class="bi bi-grid-3x3-gap"></i> Grid
+                            </button>
+                        </div>
+                        <a asp-action="Create" class="btn btn-success btn-lg shadow">
+                            <i class="bi bi-plus-circle-fill me-2"></i> New Transaction
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <form id="filterForm" class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Search</label>
+                        <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Description or category..." />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">From Date</label>
+                        <input type="date" id="fromDate" class="form-control form-control-lg" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">To Date</label>
+                        <input type="date" id="toDate" class="form-control form-control-lg" />
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" id="applyFilter" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-search me-2"></i> Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- List View -->
+<div id="listView" class="view-mode">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th class="text-end">Amount</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsBody">
+                        <!-- JS bilan to‘ldiriladi -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grid View -->
+<div id="gridView" class="view-mode" style="display: none;">
+    <div class="row g-4" id="transactionsGrid">
+        <!-- JS bilan to‘ldiriladi -->
+    </div>
+</div>
+
+<!-- No Results -->
+<div id="noResults" class="text-center py-5" style="display: none;">
+    <i class="bi bi-receipt fs-1 text-muted d-block mb-3"></i>
+    <p class="text-muted mb-0">No transactions found.</p>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-exclamation-triangle-fill text-danger fs-1 mb-4"></i>
+                <p>Are you sure you want to delete this transaction?</p>
+                <small class="text-muted">This action cannot be undone.</small>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary btn-lg px-5" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-danger btn-lg px-5 shadow">
+                        <i class="bi bi-trash me-2"></i> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const transactionsData = @Html.Raw(Json.Serialize(Model));
+
+        let currentView = localStorage.getItem('transactionsViewMode') || 'list';
+
+        function renderTransactions() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+
+            let filtered = transactionsData;
+
+            if (search) {
+                filtered = filtered.filter(t =>
+                    (t.description?.toLowerCase().includes(search) || false) ||
+                    t.categoryName.toLowerCase().includes(search)
+                );
+            }
+
+            if (fromDate) {
+                filtered = filtered.filter(t => t.date >= fromDate);
+            }
+
+            if (toDate) {
+                filtered = filtered.filter(t => t.date <= toDate);
+            }
+
+            const listBody = document.getElementById('transactionsBody');
+            const gridContainer = document.getElementById('transactionsGrid');
+            const noResults = document.getElementById('noResults');
+
+            listBody.innerHTML = '';
+            gridContainer.innerHTML = '';
+
+            if (filtered.length === 0) {
+                noResults.style.display = 'block';
+                document.getElementById('listView').style.display = 'none';
+                document.getElementById('gridView').style.display = 'none';
+                return;
+            }
+
+            noResults.style.display = 'none';
+
+            filtered.forEach(t => {
+                const amountClass = t.isIncome ? 'text-success' : 'text-danger';
+                const amountSign = t.isIncome ? '+' : '-';
+
+                const deleteButton = `
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                            onclick="document.getElementById('deleteForm').action = '/Transactions/Delete/${t.id}'">
+                        <i class="bi bi-trash"></i>
+                    </button>`;
+
+                const actions = `
+                    <a href="/Transactions/Edit/${t.id}" class="btn btn-sm btn-outline-primary me-2">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    ${deleteButton}
+                `;
+
+                // List View
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-3">${t.date}</td>
+                    <td>
+                        <span class="badge rounded-pill px-3 py-2" style="background-color: ${t.categoryColor}; color: white;">
+                            ${t.categoryName}
+                        </span>
+                    </td>
+                    <td class="py-3">${t.description || '<em class="text-muted">No description</em>'}</td>
+                    <td class="text-end fw-bold ${amountClass} py-3">${amountSign}${t.amount.toLocaleString()}</td>
+                    <td class="text-end py-3">${actions}</td>
+                `;
+                listBody.appendChild(row);
+
+                // Grid View
+                const card = document.createElement('div');
+                card.className = 'col-md-6 col-lg-4';
+                card.innerHTML = `
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="fw-bold">${t.categoryName}</h5>
+                                    <small class="text-muted">${t.date}</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold fs-4 ${amountClass}">${amountSign}${t.amount.toLocaleString()}</div>
+                                    <span class="badge rounded-pill" style="background-color: ${t.categoryColor}; color: white;">
+                                        ${t.isIncome ? 'Income' : 'Expense'}
+                                    </span>
+                                </div>
+                            </div>
+                            <p class="mb-3">${t.description || '<em class="text-muted">No description</em>'}</p>
+                            <div class="text-end">
+                                ${actions}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                gridContainer.appendChild(card);
+            });
+
+            document.getElementById('listView').style.display = currentView === 'list' ? 'block' : 'none';
+            document.getElementById('gridView').style.display = currentView === 'grid' ? 'block' : 'none';
+        }
+
+        // View mode
+        document.querySelectorAll('#viewModeGroup button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#viewModeGroup button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+                localStorage.setItem('transactionsViewMode', currentView);
+                renderTransactions();
+            });
+        });
+
+        // Filter
+        document.getElementById('applyFilter').addEventListener('click', renderTransactions);
+
+        // Default view
+        document.querySelector(`#viewModeGroup button[data-view="${currentView}"]`).classList.add('active');
+
+        renderTransactions();
+    </script>
+}

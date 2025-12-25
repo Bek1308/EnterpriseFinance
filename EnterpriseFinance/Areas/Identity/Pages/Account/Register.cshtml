@@ -1,0 +1,69 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Register";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
+}
+
+<div class="auth-card" style="max-width: 520px;">
+    <!-- Kengroq forma -->
+    <div class="card-body p-5 p-lg-6">
+        <div class="text-center mb-5">
+            <h1 class="logo-text mb-4">EF</h1>
+            <h3 class="fw-bold mb-2">Create Account</h3>
+            <p class="text-muted">Register a new user for Enterprise Finance</p>
+        </div>
+
+        <form method="post">
+            <div class="mb-4">
+                <label class="form-label">Full Name</label>
+                <input type="text" name="Input.FullName" class="form-control form-control-lg" required />
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-control form-control-lg" placeholder="email@company.com" />
+                <span asp-validation-for="Input.Email" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="Input.Password" class="form-label"></label>
+                <input asp-for="Input.Password" class="form-control form-control-lg" placeholder="••••••••" />
+                <span asp-validation-for="Input.Password" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-5">
+                <label asp-for="Input.ConfirmPassword" class="form-label"></label>
+                <input asp-for="Input.ConfirmPassword" class="form-control form-control-lg" placeholder="••••••••" />
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+            </div>
+
+            @if (!ModelState.IsValid)
+            {
+                <div class="alert alert-danger mb-4">
+                    <strong>Iltimos, quyidagi xatoliklarni tuzating:</strong>
+                    <ul class="mb-0 mt-2">
+                        @foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <button type="submit" class="btn btn-success btn-lg w-100">
+                Register
+            </button>
+        </form>
+
+        <div class="text-center mt-4">
+            <p class="text-muted">
+                Already have an account? <a asp-page="./Login" class="link-success">Sign in</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

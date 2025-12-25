@@ -1,0 +1,62 @@
+﻿@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Sign In";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
+}
+
+<div class="auth-card" style="max-width: 520px;">
+    <!-- Kengaytirildi: 420px → 520px -->
+    <div class="card-body p-5 p-lg-6">
+        <div class="text-center mb-5">
+            <h1 class="logo-text mb-4">EF</h1>
+            <h3 class="fw-bold mb-2">Welcome Back</h3>
+            <p class="text-muted">Sign in to your Enterprise Finance account</p>
+        </div>
+
+        <form method="post">
+            <div class="mb-4">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-control form-control-lg" placeholder="admin@company.com" />
+                <span asp-validation-for="Input.Email" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-5">
+                <label asp-for="Input.Password" class="form-label"></label>
+                <input asp-for="Input.Password" class="form-control form-control-lg" placeholder="••••••••" />
+                <span asp-validation-for="Input.Password" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-5 d-flex justify-content-between align-items-center">
+                <div class="form-check">
+                    <input asp-for="Input.RememberMe" class="form-check-input" />
+                    <label asp-for="Input.RememberMe" class="form-check-label">
+                        Remember me
+                    </label>
+                </div>
+            </div>
+
+            @if (!ModelState.IsValid)
+            {
+                <div class="alert alert-danger mb-4">
+                    Invalid email or password.
+                </div>
+            }
+
+            <button type="submit" class="btn btn-success btn-lg w-100">
+                Sign In
+            </button>
+        </form>
+
+        <div class="text-center mt-4">
+            <p class="text-muted small mb-0">
+                Demo account:<br>
+                <strong>admin@company.com</strong> | <strong>Admin@123</strong>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
