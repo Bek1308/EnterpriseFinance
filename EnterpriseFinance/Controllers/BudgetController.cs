@@ -107,8 +107,8 @@ namespace EnterpriseFinance.Controllers
             budget.CreatedAt = DateTime.UtcNow;
             budget.CreatedBy = User.Identity?.Name ?? "System";
 
-            if (ModelState.IsValid)
-            {
+            //if (ModelState.IsValid)
+            //{
                 try
                 {
                     _context.Add(budget);
@@ -120,7 +120,7 @@ namespace EnterpriseFinance.Controllers
                 {
                     ModelState.AddModelError("", "An error occurred while saving the budget.");
                 }
-            }
+            //}
 
             ViewBag.Categories = new SelectList(
                 await _context.Categories
